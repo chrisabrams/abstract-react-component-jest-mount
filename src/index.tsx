@@ -3,6 +3,7 @@ import { render, unmountComponentAtNode } from 'react-dom'
 
 interface IOptions {
   selector?: any
+  wrapper: (tree) => any
 }
 
 /**
@@ -34,7 +35,9 @@ export default function mount (tree, _options?: IOptions) {
     }
   })
 
-  render(clone, options.selector)
+  const _tree = (typeof options.wrapper == 'function') ? options.wrapper(clone) : clone
+
+  render(_tree, options.selector)
 
   const unmount = () => {
     unmountComponentAtNode(options.selector)

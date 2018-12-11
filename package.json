@@ -1,6 +1,6 @@
 {
   "name": "abstract-react-component-jest-mount",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/src/index.js",
   "repository": "git@github.com:chrisabrams/abstract-react-component-jest-mount.git",
   "author": "Chris Abrams <mail@chrisabrams.com>",
