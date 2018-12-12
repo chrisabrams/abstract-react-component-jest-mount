@@ -3,13 +3,39 @@ import React from 'react'
 import { expect } from 'test/helpers'
 import mount from '../../src/index'
 
-interface IProps {
+function getRootTextContent () {
+  return document.getElementById('root').textContent
+}
+
+interface IPropsStateless {
   message: string
 }
 
-class SomeClass extends React.Component<IProps> {
+function StatelessComponent(props) {
 
-  public static defaultProps: Partial<IProps> = {
+  return <div>{props.message}</div>
+
+}
+
+function StatelessComponentWithRef(props) {
+
+  const setRef = (ref) => {
+    if(props.setRef) {
+      props.setRef(ref)
+    }
+  }
+
+  return <div ref={setRef}>{props.message}</div>
+
+}
+
+interface IPropsStateful {
+  message: string
+}
+
+class SomeClass extends React.Component<IPropsStateful> {
+
+  public static defaultProps: Partial<IPropsStateful> = {
     message: 'Hello World!'
   }
 
@@ -49,13 +75,65 @@ function wrapper(tree) {
 
 }
 
-describe('Mount', function () {
+describe('Stateless', function () {
 
-  it('should mount and unmount component', function () {
+  it('default', function () {
+
+    const { container, ref, root, unmount } = mount(<StatelessComponent message="No State!" />, { type: 'stateless' })
+
+    expect(getRootTextContent()).to.equal('No State!')
+
+    expect(container.props.message).to.equal('No State!')
+    expect(ref).to.equal(undefined)
+    expect(root).to.equal(undefined)
+
+    unmount()
+
+    expect(getRootTextContent()).to.equal('')
+
+  })
+  
+  it('with ref', function () {
+
+    const { container, ref, root, unmount } = mount(<StatelessComponentWithRef message="No State!" />, { type: 'stateless' })
+
+    expect(getRootTextContent()).to.equal('No State!')
+
+    expect(container.props.message).to.equal('No State!')
+    expect(ref.textContent).to.equal('No State!')
+    expect(root).to.equal(undefined)
+
+    unmount()
+
+    expect(getRootTextContent()).to.equal('')
+
+  })
+
+  it('nested', function () {
+
+    const { container, ref, root, unmount } = mount(<StatelessComponentWithRef message="No State!" />, { type: 'stateless', wrapper })
+
+    expect(getRootTextContent()).to.equal('No State!')
+
+    expect(container.props.message).to.equal('No State!')
+    expect(ref.textContent).to.equal('No State!')
+    expect(root).to.equal(undefined)
+
+    unmount()
+
+    expect(getRootTextContent()).to.equal('')
+
+  })
+
+})
+
+describe('Stateful', function () {
+
+  it('default', function () {
 
     const { ref, root, unmount } = mount(<SomeClass />)
 
-    expect(document.getElementById('root').textContent).to.equal('Hello World!')
+    expect(getRootTextContent()).to.equal('Hello World!')
 
     expect(ref.mode).to.equal('default')
     expect(ref.props.message).to.equal('Hello World!')
@@ -69,33 +147,29 @@ describe('Mount', function () {
 
     unmount()
 
-    expect(document.getElementById('root').textContent).to.equal('')
+    expect(getRootTextContent()).to.equal('')
 
   })
 
-  describe('Nested Component', function () {
+  it('nested', function () {
 
-    it('should get ref and root', function() {
+    const { ref, root, unmount } = mount(<SomeClass />, { wrapper })
 
-      const { ref, root, unmount } = mount(<SomeClass />, { wrapper })
+    expect(getRootTextContent()).to.equal('Hello World!')
 
-      expect(document.getElementById('root').textContent).to.equal('Hello World!')
+    expect(ref.mode).to.equal('default')
+    expect(ref.props.message).to.equal('Hello World!')
+    expect(ref.state.foo).to.equal('bar')
+    expect(ref.type).to.equal('derived')
 
-      expect(ref.mode).to.equal('default')
-      expect(ref.props.message).to.equal('Hello World!')
-      expect(ref.state.foo).to.equal('bar')
-      expect(ref.type).to.equal('derived')
+    expect(root.mode).to.equal('default')
+    expect(root.props.message).to.equal('Hello World!')
+    expect(root.state.foo).to.equal('bar')
+    expect(root.type).to.equal('derived')
 
-      expect(root.mode).to.equal('default')
-      expect(root.props.message).to.equal('Hello World!')
-      expect(root.state.foo).to.equal('bar')
-      expect(root.type).to.equal('derived')
+    unmount()
 
-      unmount()
-
-      expect(document.getElementById('root').textContent).to.equal('')
-
-    })
+    expect(getRootTextContent()).to.equal('')
 
   })
 

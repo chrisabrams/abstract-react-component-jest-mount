@@ -1,9 +1,18 @@
 import React from 'react'
 import { render, unmountComponentAtNode } from 'react-dom'
 
-interface IOptions {
+type Type = 'stateful' | 'stateless'
+
+export interface IOptions {
   selector?: any
-  wrapper: (tree) => any
+  type?: Type
+  wrapper?: (tree) => any
+}
+
+export interface ITestComponentProps {
+  ref?: (ref) => void,
+  setRef?: (ref) => void
+  setRoot?: (root) => void
 }
 
 /**
@@ -25,16 +34,32 @@ export default function mount (tree, _options?: IOptions) {
     ..._options
   }
 
-  let __ref = null
-  let __root = null
+  let __ref = undefined
+  let __root = undefined
 
-  const clone = React.cloneElement(tree, {
-    ref: ref => __ref = ref,
-    setRoot: (root) => {
+  const cloneOptions: ITestComponentProps = {}
+
+  // Stateless
+  if(options.type && options.type == 'stateless') {
+
+    cloneOptions.setRef = (ref) => {
+      __ref = ref
+    }
+    
+    //__root = {  }
+
+  }
+  // Stateful
+  else {
+
+    cloneOptions.ref = ref => __ref = ref
+    cloneOptions.setRoot = (root) => {
       __root = root
     }
-  })
 
+  }
+
+  const clone: any = React.cloneElement(tree, cloneOptions)
   const _tree = (typeof options.wrapper == 'function') ? options.wrapper(clone) : clone
 
   render(_tree, options.selector)
@@ -54,6 +79,8 @@ export default function mount (tree, _options?: IOptions) {
   }
 
   return {
+    container: clone,
+    original: tree,
     ref: __ref,
     root: __root,
     unmount
