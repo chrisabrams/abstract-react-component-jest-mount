@@ -4,14 +4,14 @@ import { render, unmountComponentAtNode } from 'react-dom'
 type Type = 'stateful' | 'stateless'
 
 export interface IOptions {
+  ref?: any
   selector?: any
   type?: Type
   wrapper?: (tree) => any
 }
 
 export interface ITestComponentProps {
-  ref?: (ref) => void,
-  setRef?: (ref) => void
+  ref?: any,
   setRoot?: (root) => void
 }
 
@@ -27,24 +27,24 @@ document.body.appendChild(docRoot)
  * @param tree The React component or set of components to be mounted.
  * @param _options Options
  */
-export default function mount (tree, _options?: IOptions) {
+export default function mount (Tree, _options?: IOptions) {
 
   const options = {
     selector: document.getElementById('root'),
     ..._options
   }
 
-  let __ref = undefined
+  /*
+  NOTE:
+  The type is any because we don't know what is being passed in.
+  */
+  let __ref = React.createRef<any>()
   let __root = undefined
 
-  const cloneOptions: ITestComponentProps = {}
+  const cloneOptions: ITestComponentProps = { }
 
   // Stateless
   if(options.type && options.type == 'stateless') {
-
-    cloneOptions.setRef = (ref) => {
-      __ref = ref
-    }
     
     //__root = {  }
 
@@ -52,17 +52,18 @@ export default function mount (tree, _options?: IOptions) {
   // Stateful
   else {
 
-    cloneOptions.ref = ref => __ref = ref
+    cloneOptions.ref = (options && options.ref) ? options.ref : __ref
     cloneOptions.setRoot = (root) => {
       __root = root
     }
 
   }
 
-  const clone: any = React.cloneElement(tree, cloneOptions)
-  const _tree = (typeof options.wrapper == 'function') ? options.wrapper(clone) : clone
+  let clone = null
+  const Clone: any = React.cloneElement(Tree, cloneOptions)
+  let _Tree = (typeof options.wrapper == 'function') ? options.wrapper(Clone) : Clone
 
-  render(_tree, options.selector)
+  render(_Tree, options.selector)
 
   const unmount = () => {
     unmountComponentAtNode(options.selector)
@@ -79,8 +80,8 @@ export default function mount (tree, _options?: IOptions) {
   }
 
   return {
-    container: clone,
-    original: tree,
+    container: Clone,
+    original: Tree,
     ref: __ref,
     root: __root,
     unmount

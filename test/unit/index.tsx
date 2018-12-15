@@ -1,4 +1,3 @@
-import AbstractReactClass from '../../src/index'
 import React from 'react'
 import { expect } from 'test/helpers'
 import mount from '../../src/index'
@@ -8,38 +7,32 @@ function getRootTextContent () {
 }
 
 interface IPropsStateless {
-  message: string
+  defaultValue: string
 }
 
-function StatelessComponent(props) {
+type TRefStatelessInput = HTMLInputElement
+const StatelessInput = React.forwardRef<TRefStatelessInput, IPropsStateless>((props: IPropsStateless, ref) => (
+  <input ref={ref} {...props} />
+))
 
-  return <div>{props.message}</div>
-
-}
-
-function StatelessComponentWithRef(props) {
-
-  const setRef = (ref) => {
-    if(props.setRef) {
-      props.setRef(ref)
-    }
-  }
-
-  return <div ref={setRef}>{props.message}</div>
-
-}
+const StatelessInputNested = React.forwardRef<TRefStatelessInput, IPropsStateless>((props: IPropsStateless, ref) => (
+  <div><input ref={ref} {...props} /></div>
+))
 
 interface IPropsStateful {
-  message: string
+  defaultValue: string
+  ref: any
+  setRoot?: any
 }
 
-class SomeClass extends React.Component<IPropsStateful> {
+class StatefulInput extends React.Component<IPropsStateful> {
 
   public static defaultProps: Partial<IPropsStateful> = {
-    message: 'Hello World!'
+    defaultValue: 'Hello World!'
   }
 
   mode = 'default'
+  _props: IPropsStateful
 
   state = {
     foo: 'bar'
@@ -48,15 +41,21 @@ class SomeClass extends React.Component<IPropsStateful> {
   type: string
 
   constructor(props) {
+
     super(props)
 
     props.setRoot(this)
+
+    this._props = {
+      ...props
+    }
+    delete this._props.setRoot
 
     this.type = 'derived'
   }
 
   render() {
-    return <div>{this.props.message}</div>
+    return <input ref={this.props.ref} {...this._props} />
   }
 
 }
@@ -79,28 +78,11 @@ describe('Stateless', function () {
 
   it('default', function () {
 
-    const { container, ref, root, unmount } = mount(<StatelessComponent message="No State!" />, { type: 'stateless' })
+    const ref = React.createRef<TRefStatelessInput>()
+    const { container, root, unmount } = mount(<StatelessInput ref={ref} defaultValue="No State!" />, { type: 'stateless' })
 
-    expect(getRootTextContent()).to.equal('No State!')
-
-    expect(container.props.message).to.equal('No State!')
-    expect(ref).to.equal(undefined)
-    expect(root).to.equal(undefined)
-
-    unmount()
-
-    expect(getRootTextContent()).to.equal('')
-
-  })
-  
-  it('with ref', function () {
-
-    const { container, ref, root, unmount } = mount(<StatelessComponentWithRef message="No State!" />, { type: 'stateless' })
-
-    expect(getRootTextContent()).to.equal('No State!')
-
-    expect(container.props.message).to.equal('No State!')
-    expect(ref.textContent).to.equal('No State!')
+    expect(container.props.defaultValue).to.equal('No State!')
+    expect(ref.current.value).to.equal('No State!')
     expect(root).to.equal(undefined)
 
     unmount()
@@ -111,12 +93,11 @@ describe('Stateless', function () {
 
   it('nested', function () {
 
-    const { container, ref, root, unmount } = mount(<StatelessComponentWithRef message="No State!" />, { type: 'stateless', wrapper })
+    const ref = React.createRef<TRefStatelessInput>()
+    const { container, root, unmount } = mount(<StatelessInputNested ref={ref} defaultValue="No State!" />, { type: 'stateless' })
 
-    expect(getRootTextContent()).to.equal('No State!')
-
-    expect(container.props.message).to.equal('No State!')
-    expect(ref.textContent).to.equal('No State!')
+    expect(container.props.defaultValue).to.equal('No State!')
+    expect(ref.current.value).to.equal('No State!')
     expect(root).to.equal(undefined)
 
     unmount()
@@ -131,17 +112,12 @@ describe('Stateful', function () {
 
   it('default', function () {
 
-    const { ref, root, unmount } = mount(<SomeClass />)
+    const { ref, root, unmount } = mount(<StatefulInput />)
 
-    expect(getRootTextContent()).to.equal('Hello World!')
-
-    expect(ref.mode).to.equal('default')
-    expect(ref.props.message).to.equal('Hello World!')
-    expect(ref.state.foo).to.equal('bar')
-    expect(ref.type).to.equal('derived')
+    expect(ref.current.props.defaultValue).to.equal('Hello World!')
 
     expect(root.mode).to.equal('default')
-    expect(root.props.message).to.equal('Hello World!')
+    expect(root.props.defaultValue).to.equal('Hello World!')
     expect(root.state.foo).to.equal('bar')
     expect(root.type).to.equal('derived')
 
@@ -153,17 +129,12 @@ describe('Stateful', function () {
 
   it('nested', function () {
 
-    const { ref, root, unmount } = mount(<SomeClass />, { wrapper })
+    const { ref, root, unmount } = mount(<StatefulInput />, { wrapper })
 
-    expect(getRootTextContent()).to.equal('Hello World!')
-
-    expect(ref.mode).to.equal('default')
-    expect(ref.props.message).to.equal('Hello World!')
-    expect(ref.state.foo).to.equal('bar')
-    expect(ref.type).to.equal('derived')
+    expect(ref.current.props.defaultValue).to.equal('Hello World!')
 
     expect(root.mode).to.equal('default')
-    expect(root.props.message).to.equal('Hello World!')
+    expect(root.props.defaultValue).to.equal('Hello World!')
     expect(root.state.foo).to.equal('bar')
     expect(root.type).to.equal('derived')
 
